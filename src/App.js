@@ -23,11 +23,14 @@ const App = () => {
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     const draggedIndex = e.dataTransfer.getData('draggedIndex');
-    if (dropIndex !== null ) {
+    if (dropIndex !== null && draggedIndex !== dropIndex) {
       const newImages = [...images];
-      // splice(start,deletecount,itemadd)
-      const draggedImage = newImages.splice(draggedIndex, 1); // Remove the dragged image
-      newImages.splice(dropIndex, 0, draggedImage); // Insert the dragged image at the new position
+      // // splice(start,deletecount,itemadd)
+      // const draggedImage= newImages.splice(draggedIndex, 1); // Remove the dragged image
+      // newImages.splice(dropIndex,0, draggedImage); // Insert the dragged image at the new position
+
+        // Swap the positions of the dragged image index and the drop image index
+        [newImages[draggedIndex], newImages[dropIndex]] = [newImages[dropIndex], newImages[draggedIndex]];
       setImages(newImages);
     }
   };
