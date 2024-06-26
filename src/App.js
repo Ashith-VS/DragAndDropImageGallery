@@ -1,16 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import { deleteObject, getDownloadURL, listAll, ref, uploadBytes } from 'firebase/storage';
+import { storage } from './services/firebase';
+import {v4 as uuid} from "uuid"
+import { Slide, ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import addIcon from "./assets/images/plus_icon.png"
 
 const App = () => {
-  const [images, setImages] = useState([]);
+  const [imageList, setImageList] = useState([]);
+ 
+  const fetchImages = () => {
+    const imageListRef = ref(storage, "images");
+    listAll(imageListRef).then((response) => {
+      const promises = response.items.map(async (item) => {
+        const url = await getDownloadURL(item);
+        return { url, path: item.fullPath };
+      });
+      Promise.all(promises).then((urls) => {
+        setImageList(urls);
+      });
+    });
+  };
+  
+  useEffect(() => {
+    fetchImages();
+  }, []);
 
-  const handleUpload = (e) => {
-    const files = e.target.files;
-    if(files){ 
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file));
-      setImages([...images, ...newImages]);
+  const handleUpload = (files) => {
+    if (files && files.length > 0) {
+      const uploadTasks = Array.from(files).map((file) => {
+        const imageName = `${file.name}_${uuid()}`; // Generate a unique image name using UUID
+        const imageRef = ref(storage, `images/${imageName}`);
+        return uploadBytes(imageRef, file).then(() => {
+          console.log(`Image ${imageName} uploaded successfully`);
+        });
+      });
+      Promise.all(uploadTasks).then(() => {
+        fetchImages(); 
+        toast.success('Images uploaded successfully');
+      }).catch((error) => {
+        console.error('Error uploading images:', error);
+      });
     }
   };
+
+  const handleDeleteImage = async(path) => {
+    const imageRef = ref(storage, path);
+    try {
+      await deleteObject(imageRef);
+      fetchImages(); // Refresh image list after deletion
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  }
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -24,30 +67,45 @@ const App = () => {
     e.preventDefault();
     const draggedIndex = e.dataTransfer.getData('draggedIndex');
     if (dropIndex !== null && draggedIndex !== dropIndex) {
-      const newImages = [...images];
+      const newImages = [...imageList];
       // // splice(start,deletecount,itemadd)
       // const draggedImage= newImages.splice(draggedIndex, 1); // Remove the dragged image
       // newImages.splice(dropIndex,0, draggedImage); // Insert the dragged image at the new position
 
         // Swap the positions of the dragged image index and the drop image index
         [newImages[draggedIndex], newImages[dropIndex]] = [newImages[dropIndex], newImages[draggedIndex]];
-      setImages(newImages);
+      setImageList(newImages);
     }
   };
+
+  const handleFileDrop = (e)=>{
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleUpload(files);
+    }
+  }
 
   return (
     <div className="app">
     <h1>Drag and Drop Gallery</h1>
-    <label htmlFor="upload-input" className="upload-label">Upload Images</label>
+       <div
+        className="drop-area"
+        onDragOver={handleDragOver}
+        onDrop={handleFileDrop}
+      >
+        Drag and drop files here to upload
+      </div>
+      <label htmlFor="upload-input" className="upload-label">Upload Images</label>
       <input
         type="file"
         id="upload-input"
         multiple
-        onChange={handleUpload}
+        onChange={(e)=>handleUpload(e.target.files)}
         className="upload-input"
       />
     <div className="gallery">
-      {images.map((image, i) => (
+      {imageList.map((image, i) => (
         <div
           key={i}
           className="gallery-item"
@@ -56,11 +114,39 @@ const App = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, i)}
         >
-          <img src={image} alt="img" className="gallery-image" />
-          <button className="delete-button" onClick={() => setImages(images.filter((_, index) => index !== i))}>X</button>
+          <img src={image?.url} alt="img" className="gallery-image" />
+          <button className="delete-button" onClick={()=>handleDeleteImage(image?.path)}>X</button>
         </div>
       ))}
+       <div
+          className="gallery-items"
+          onDragOver={handleDragOver}
+          onDrop={handleFileDrop}
+        >
+          <h4 className='file-upload'> Drag and drop files here to upload</h4>
+          <input
+        type="file"
+        id="upload-input"
+        multiple
+        onChange={(e)=>handleUpload(e.target.files)}
+        className="upload-input"
+      /> 
+         <label htmlFor="upload-input"><img src={addIcon} alt="upload_img" className='upload_img' /></label>
+        </div>
     </div>
+    <ToastContainer 
+    position="top-center"
+    autoClose={5000}
+    hideProgressBar
+    newestOnTop
+    closeOnClick
+    rtl={false}
+    pauseOnFocusLoss
+    draggable
+    pauseOnHover
+    theme="dark"
+    transition={Slide}
+/>
   </div>
   );
 };
