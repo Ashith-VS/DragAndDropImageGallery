@@ -34,6 +34,7 @@ const App = () => {
   
   useEffect(() => {
     fetchImages()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpload = async (files) => {
