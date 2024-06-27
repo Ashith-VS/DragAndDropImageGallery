@@ -78,9 +78,10 @@ h1 {
   overflow: hidden;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #a19b9b;
+  background-color: #e6e6e6;
   width: 150px; 
-  height: 150px; 
+  height: fit-content; 
+  border: 1px dotted gainsboro;
   /* object-fit: cover;  */
   /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease; */
@@ -96,33 +97,60 @@ h1 {
   position: absolute;
   top: 5px;
   right: 5px;
-  background-color: rgba(255, 0, 0, 0.7);
+  background-color: rgb(233, 163, 163);
   border: none;
-  color: white;
+  color: rgba(17, 4, 4, 0.884);
   padding: 5px;
   border-radius: 50%;
   cursor: pointer;
 }
 
-.delete-button:hover {
-  background-color: rgba(255, 0, 0, 0.9);
+.delete_btn{
+  width:25px;
+  height: 25px;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgb(247, 242, 242);
+border-radius: 50px;
+  cursor: pointer;
 }
 
 .file-upload{
   display: flex;
-  padding: 5px;
+  /* padding: 5dpx,0px,5px,0px; */
   align-items: center;
   justify-content: center;
+  text-align: center;
+
 }
 .upload_img{
+  /* position: absolute; */
   width: 50px;
   height: 50px;
-  display: flex;
-  justify-content: center;
-  align-content: center;
+  /* display: flex; */
+  /* justify-content: center; */
+  /* align-content: center; */
   margin: auto;
   padding-bottom: 9px;
-  /* padding: 10rem; */
-  /* justify-self: auto; */
-  /* object-fit: cover; */
+ 
+}
+
+.selected-img{
+  max-width: 100%;
+  max-height: 80vh;
+}
+.zoom {
+  transition: transform 0.5s ease-in-out; /* Adjust transition duration and easing for smooth zoom */
+  transform-origin: center;
+  position: relative; /* Ensure the image is positioned relatively */
+}
+
+.zoom:hover {
+  transform: scale(6);
+  z-index: 2;
+  position: absolute; /* Change to absolute only on hover */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(6); /* Combine translate and scale for proper centering and zoom */
 }

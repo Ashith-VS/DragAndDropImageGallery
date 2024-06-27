@@ -6,10 +6,14 @@ import {v4 as uuid} from "uuid"
 import { Slide, ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import addIcon from "./assets/images/plus_icon.png"
+import deleteIcon from "./assets/images/delete_icon.png"
+import ReactModal from 'react-modal';
 
 const App = () => {
   const [imageList, setImageList] = useState([]);
- 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  
   const fetchImages = () => {
     const imageListRef = ref(storage, "images");
     listAll(imageListRef).then((response) => {
@@ -66,7 +70,7 @@ const App = () => {
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     const draggedIndex = e.dataTransfer.getData('draggedIndex');
-    if (dropIndex !== null && draggedIndex !== dropIndex) {
+    if (dropIndex !== null && draggedIndex !== dropIndex){
       const newImages = [...imageList];
       // // splice(start,deletecount,itemadd)
       // const draggedImage= newImages.splice(draggedIndex, 1); // Remove the dragged image
@@ -85,6 +89,36 @@ const App = () => {
       handleUpload(files);
     }
   }
+
+  const customStyles = {
+    content: {
+      top: "50%",
+      left: "50%",
+      right: "auto",
+      bottom: "auto",
+      marginRight: "-50%",
+      transform: "translate(-50%, -50%)",
+    },
+  };
+  const handleModal=(url)=>{
+   setSelectedImage(url)
+    setIsModalOpen(true)
+  }
+
+  const handleClearFile=()=>{
+    setIsModalOpen(false)
+    setSelectedImage(null)
+  }
+
+const handleMouseEnter = (url) => {
+    setSelectedImage(url);
+    setIsModalOpen(true);
+};
+
+const handleMouseLeave = () => {
+  setIsModalOpen(false);
+  // setSelectedImage(null);
+};
 
   return (
     <div className="app">
@@ -108,22 +142,33 @@ const App = () => {
       {imageList.map((image, i) => (
         <div
           key={i}
-          className="gallery-item"
+          className="gallery-item "
           draggable
           onDragStart={(e) => handleDragStart(e, i)}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, i)}
+          // onMouseEnter={() =>{setTimeout(()=>{
+          //   handleMouseEnter(image.url)
+          // }),1000}}
+          // onMouseOut={()=>{setTimeout(()=>{
+          //   handleMouseLeave()
+          // }),800}}
+          //  onMouseEnter={() => handleMouseEnter(image.url)}
+          //   onMouseLeave={handleMouseLeave}
         >
-          <img src={image?.url} alt="img" className="gallery-image" />
-          <button className="delete-button" onClick={()=>handleDeleteImage(image?.path)}>X</button>
+          <img src={image?.url} alt="img" className="gallery-image"  onClick={()=>handleModal(image.url)}/>
+          <div> <img src={deleteIcon} alt="" className='delete_btn' onClick={()=>handleDeleteImage(image?.path)}/></div>
+         
         </div>
       ))}
        <div
           className="gallery-items"
           onDragOver={handleDragOver}
           onDrop={handleFileDrop}
+          style={{color:'gray', display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center'}}
         >
           <h4 className='file-upload'> Drag and drop files here to upload</h4>
+      <div style={{width:'100%', display:'flex',justifyContent:'center', alignItems:'center'}}>
           <input
         type="file"
         id="upload-input"
@@ -131,9 +176,18 @@ const App = () => {
         onChange={(e)=>handleUpload(e.target.files)}
         className="upload-input"
       /> 
-         <label htmlFor="upload-input"><img src={addIcon} alt="upload_img" className='upload_img' /></label>
+         <label htmlFor="upload-input">
+          <img src={addIcon} alt="upload_img" className='upload_img' />
+          </label>
+      </div>
         </div>
     </div>
+    <ReactModal
+      style={customStyles}
+      isOpen={isModalOpen}
+      onRequestClose={handleClearFile}>
+      <img src={selectedImage} alt="img" className='selected-img'/>
+      </ReactModal>
     <ToastContainer 
     position="top-center"
     autoClose={5000}
@@ -152,3 +206,4 @@ const App = () => {
 };
 
 export default App;
+
