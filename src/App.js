@@ -43,6 +43,7 @@ const App = () => {
       Promise.all(uploadTasks).then(() => {
         fetchImages(); 
         toast.success('Images uploaded successfully');
+        document.getElementById('upload-input').value = ''; // Clear the input value when each successful update
       }).catch((error) => {
         console.error('Error uploading images:', error);
       });
@@ -127,6 +128,7 @@ const App = () => {
         multiple
         onChange={(e)=>handleUpload(e.target.files)}
         className="upload-input"
+        accept="image/*"  // Accept all image formats
       />
     <div className="gallery">
       {imageList.map((image, i) => (
@@ -157,6 +159,7 @@ const App = () => {
         multiple
         onChange={(e)=>handleUpload(e.target.files)}
         className="upload-input"
+        accept="image/*"  // Accept all image formats
       /> 
          <label htmlFor="upload-input">
           <img src={addIcon} alt="upload_img" className='upload_img' />
