@@ -110,16 +110,6 @@ const App = () => {
     setSelectedImage(null)
   }
 
-const handleMouseEnter = (url) => {
-    setSelectedImage(url);
-    setIsModalOpen(true);
-};
-
-const handleMouseLeave = () => {
-  setIsModalOpen(false);
-  // setSelectedImage(null);
-};
-
   return (
     <div className="app">
     <h1>Drag and Drop Gallery</h1>
@@ -147,14 +137,6 @@ const handleMouseLeave = () => {
           onDragStart={(e) => handleDragStart(e, i)}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, i)}
-          // onMouseEnter={() =>{setTimeout(()=>{
-          //   handleMouseEnter(image.url)
-          // }),1000}}
-          // onMouseOut={()=>{setTimeout(()=>{
-          //   handleMouseLeave()
-          // }),800}}
-          //  onMouseEnter={() => handleMouseEnter(image.url)}
-          //   onMouseLeave={handleMouseLeave}
         >
           <img src={image?.url} alt="img" className="gallery-image"  onClick={()=>handleModal(image.url)}/>
           <div> <img src={deleteIcon} alt="" className='delete_btn' onClick={()=>handleDeleteImage(image?.path)}/></div>
