@@ -30,11 +30,9 @@ const App = () => {
     }finally {
       setIsLoading(false);
     }
-   
   };
   
   useEffect(() => {
-    
     fetchImages()
   }, []);
 
