@@ -19,14 +19,23 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
  
   const fetchImages = async() => {
-    const response = await getDocs(imageCollectionRef);
-    const urls = response.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    setImageList(urls);
+    setIsLoading(true);
+    try {
+      const response = await getDocs(imageCollectionRef);
+      const urls = response.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      setImageList(urls);
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      toast.error('Error fetching images');
+    }finally {
+      setIsLoading(false);
+    }
+   
   };
   
   useEffect(() => {
-    setIsLoading(true)
-    fetchImages().then(()=>setIsLoading(false));
+    
+    fetchImages()
   }, []);
 
   const handleUpload = async (files) => {
