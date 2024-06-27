@@ -1,64 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { deleteObject, getDownloadURL, listAll, ref, uploadBytes } from 'firebase/storage';
-import { storage } from './services/firebase';
+import {getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from './services/firebase';
 import {v4 as uuid} from "uuid"
 import { Slide, ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import addIcon from "./assets/images/plus_icon.png"
 import deleteIcon from "./assets/images/delete_icon.png"
 import ReactModal from 'react-modal';
+import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import Loader from './components/loader';
 
 const App = () => {
   const [imageList, setImageList] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  
-  const fetchImages = () => {
-    const imageListRef = ref(storage, "images");
-    listAll(imageListRef).then((response) => {
-      const promises = response.items.map(async (item) => {
-        const url = await getDownloadURL(item);
-        return { url, path: item.fullPath };
-      });
-      Promise.all(promises).then((urls) => {
-        setImageList(urls);
-      });
-    });
+  const imageCollectionRef=collection(db,"images")
+  const [isLoading, setIsLoading] = useState(false);
+ 
+  const fetchImages = async() => {
+    const response = await getDocs(imageCollectionRef);
+    const urls = response.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setImageList(urls);
   };
   
   useEffect(() => {
-    fetchImages();
+    setIsLoading(true)
+    fetchImages().then(()=>setIsLoading(false));
   }, []);
 
-  const handleUpload = (files) => {
+  const handleUpload = async (files) => {
     if (files && files.length > 0) {
-      const uploadTasks = Array.from(files).map((file) => {
+      const uploadTasks = Array.from(files).map(async(file) =>{
         const imageName = `${file.name}_${uuid()}`; // Generate a unique image name using UUID
-        const imageRef = ref(storage, `images/${imageName}`);
-        return uploadBytes(imageRef, file).then(() => {
-          console.log(`Image ${imageName} uploaded successfully`);
-        });
+        const imageRef = ref(storage, `images/${imageName}`)
+        await uploadBytes(imageRef, file);
+        const url = await getDownloadURL(imageRef);
+        await addDoc(imageCollectionRef, { url, path: imageRef.fullPath });
       });
+      setIsLoading(true)
+
       Promise.all(uploadTasks).then(() => {
         fetchImages(); 
         toast.success('Images uploaded successfully');
         document.getElementById('upload-input').value = ''; // Clear the input value when each successful update
+        setIsLoading(false)
       }).catch((error) => {
         console.error('Error uploading images:', error);
+        toast.error('Error uploading images');
+        setIsLoading(false)
       });
     }
   };
 
-  const handleDeleteImage = async(path) => {
-    const imageRef = ref(storage, path);
+  const handleDeleteImage = async (image) => {
     try {
-      await deleteObject(imageRef);
+      setIsLoading(true)
+      await deleteDoc(doc(db, 'images', image.id));
       fetchImages(); // Refresh image list after deletion
+      toast.success('Image deleted successfully');
+      setIsLoading(false)
     } catch (error) {
       console.error('Error deleting image:', error);
+      toast.error('Error deleting image');
+      setIsLoading(false)
     }
-  }
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -73,10 +80,6 @@ const App = () => {
     const draggedIndex = e.dataTransfer.getData('draggedIndex');
     if (dropIndex !== null && draggedIndex !== dropIndex){
       const newImages = [...imageList];
-      // // splice(start,deletecount,itemadd)
-      // const draggedImage= newImages.splice(draggedIndex, 1); // Remove the dragged image
-      // newImages.splice(dropIndex,0, draggedImage); // Insert the dragged image at the new position
-
         // Swap the positions of the dragged image index and the drop image index
         [newImages[draggedIndex], newImages[dropIndex]] = [newImages[dropIndex], newImages[draggedIndex]];
       setImageList(newImages);
@@ -101,6 +104,7 @@ const App = () => {
       transform: "translate(-50%, -50%)",
     },
   };
+ 
   const handleModal=(url)=>{
    setSelectedImage(url)
     setIsModalOpen(true)
@@ -113,6 +117,7 @@ const App = () => {
 
   return (
     <div className="app">
+     
     <h1>Drag and Drop Gallery</h1>
        <div
         className="drop-area"
@@ -141,8 +146,7 @@ const App = () => {
           onDrop={(e) => handleDrop(e, i)}
         >
           <img src={image?.url} alt="img" className="gallery-image"  onClick={()=>handleModal(image.url)}/>
-          <div> <img src={deleteIcon} alt="" className='delete_btn' onClick={()=>handleDeleteImage(image?.path)}/></div>
-         
+          <div> <img src={deleteIcon} alt="" className='delete_btn' onClick={()=>handleDeleteImage(image)}/></div>
         </div>
       ))}
        <div
@@ -174,8 +178,8 @@ const App = () => {
       <img src={selectedImage} alt="img" className='selected-img'/>
       </ReactModal>
     <ToastContainer 
-    position="top-center"
-    autoClose={5000}
+    position="top-right"
+    autoClose={2000}
     hideProgressBar
     newestOnTop
     closeOnClick
@@ -186,9 +190,9 @@ const App = () => {
     theme="dark"
     transition={Slide}
 />
+<Loader loading={isLoading}/>
   </div>
   );
 };
-
 export default App;
 
