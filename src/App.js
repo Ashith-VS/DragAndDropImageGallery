@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import addIcon from "./assets/images/plus_icon.png"
 import deleteIcon from "./assets/images/delete_icon.png"
 import ReactModal from 'react-modal';
-import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query } from 'firebase/firestore';
 import Loader from './components/loader';
 
 const App = () => {
@@ -21,7 +21,8 @@ const App = () => {
   const fetchImages = async() => {
     setIsLoading(true);
     try {
-      const response = await getDocs(imageCollectionRef);
+      const q = query(imageCollectionRef, orderBy('timestamp', 'desc'));
+      const response = await getDocs(q);
       const urls = response.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setImageList(urls);
     } catch (error) {
@@ -44,7 +45,7 @@ const App = () => {
         const imageRef = ref(storage, `images/${imageName}`)
         await uploadBytes(imageRef, file);
         const url = await getDownloadURL(imageRef);
-        await addDoc(imageCollectionRef, { url, path: imageRef.fullPath });
+        await addDoc(imageCollectionRef, { url, path: imageRef.fullPath , timestamp: new Date() });
       });
       setIsLoading(true)
 
@@ -153,6 +154,8 @@ const App = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, i)}
         >
+        {console.log('imageList: ', imageList)}
+
           <img src={image?.url} alt="img" className="gallery-image"  onClick={()=>handleModal(image.url)}/>
           <div> <img src={deleteIcon} alt="" className='delete_btn' onClick={()=>handleDeleteImage(image)}/></div>
         </div>
